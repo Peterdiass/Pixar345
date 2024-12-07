@@ -1,0 +1,194 @@
+import React, { useEffect, useState } from "react";
+import {
+  StyleSheet,
+  Text,
+  View,
+  FlatList,
+  Image,
+  TouchableOpacity,
+  ScrollView,
+  ActivityIndicator,
+  Linking,  // Usando a API Linking nativa do React Native
+} from "react-native";
+
+const API_KEY = "a2bc5ae7dca19574b5b1091db59d48e4";
+const BASE_URL = "https://api.themoviedb.org/3";
+
+const App = () => {
+  const [movies, setMovies] = useState([]);
+  const [featuredMovie, setFeaturedMovie] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetchMovies();
+  }, []);
+
+  const fetchMovies = async () => {
+    try {
+      // Fetch popular movies
+      const response = await fetch(`${BASE_URL}/movie/popular?api_key=${API_KEY}&language=en-US`);
+      const data = await response.json();
+      setMovies(data.results);
+
+      // Set a random featured movie
+      setFeaturedMovie(data.results[Math.floor(Math.random() * data.results.length)]);
+      setLoading(false);
+    } catch (error) {
+      console.error("Error fetching movies:", error);
+    }
+  };
+
+  const handleMoviePress = (movie) => {
+    // Define dummy video link for demo purposes
+    const videoAvailable = Math.random() > 0.5; // Simula filmes disponíveis e indisponíveis
+    if (videoAvailable) {
+      alert(`Assistir ${movie.title} dentro do app!`);
+    } else {
+      const youtubeSearchUrl = `https://www.youtube.com/results?search_query=${encodeURIComponent(
+        movie.title + " full movie"
+      )}`;
+      Linking.openURL(youtubeSearchUrl);  // Abre o YouTube com o filme pesquisado
+    }
+  };
+
+  const renderMovieItem = ({ item }) => (
+    <TouchableOpacity onPress={() => handleMoviePress(item)} style={styles.movieCard}>
+      <Image
+        source={{ uri: `https://image.tmdb.org/t/p/w500${item.poster_path}` }}
+        style={styles.moviePoster}
+      />
+      <Text style={styles.movieTitle}>{item.title}</Text>
+    </TouchableOpacity>
+  );
+
+  if (loading) {
+    return (
+      <View style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color="#000" />
+      </View>
+    );
+  }
+
+  return (
+    <ScrollView style={styles.container}>
+      {/* App Header */}
+      <View style={styles.header}>
+        <Text style={styles.appTitle}>Pixar IA</Text>
+        <Text style={styles.verification}>✔</Text>
+      </View>
+
+      {/* Featured Movie Section */}
+      {featuredMovie && (
+        <View style={styles.featuredContainer}>
+          <Image
+            source={{ uri: `https://image.tmdb.org/t/p/w500${featuredMovie.backdrop_path}` }}
+            style={styles.featuredImage}
+          />
+          <View style={styles.featuredDetails}>
+            <Text style={styles.featuredTitle}>{featuredMovie.title}</Text>
+            <TouchableOpacity
+              style={styles.watchButton}
+              onPress={() => handleMoviePress(featuredMovie)}
+            >
+              <Text style={styles.watchButtonText}>Assistir</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      )}
+
+      {/* Movies List */}
+      <Text style={styles.sectionTitle}>Filmes Populares</Text>
+      <FlatList
+        data={movies}
+        renderItem={renderMovieItem}
+        keyExtractor={(item) => item.id.toString()}
+        horizontal
+        contentContainerStyle={styles.moviesList}
+        showsHorizontalScrollIndicator={false}
+      />
+    </ScrollView>
+  );
+};
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: "#fff",
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "#fff",
+  },
+  header: {
+    flexDirection: "row",
+    alignItems: "center",
+    padding: 10,
+  },
+  appTitle: {
+    fontSize: 24,
+    fontWeight: "bold",
+    color: "#000",
+  },
+  verification: {
+    fontSize: 20,
+    color: "gold",
+    marginLeft: 5,
+  },
+  featuredContainer: {
+    marginBottom: 20,
+  },
+  featuredImage: {
+    width: "100%",
+    height: 250,
+    borderRadius: 10,
+  },
+  featuredDetails: {
+    position: "absolute",
+    bottom: 20,
+    left: 20,
+  },
+  featuredTitle: {
+    fontSize: 24,
+    fontWeight: "bold",
+    color: "#fff",
+    marginBottom: 10,
+  },
+  watchButton: {
+    backgroundColor: "#e50914",
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    borderRadius: 5,
+  },
+  watchButtonText: {
+    color: "#fff",
+    fontSize: 16,
+    fontWeight: "bold",
+  },
+  sectionTitle: {
+    fontSize: 18,
+    fontWeight: "bold",
+    marginLeft: 10,
+    marginBottom: 10,
+  },
+  moviesList: {
+    paddingHorizontal: 10,
+  },
+  movieCard: {
+    marginRight: 10,
+  },
+  moviePoster: {
+    width: 120,
+    height: 180,
+    borderRadius: 10,
+  },
+  movieTitle: {
+    marginTop: 5,
+    fontSize: 14,
+    fontWeight: "bold",
+    textAlign: "center",
+  },
+});
+
+export default App;
